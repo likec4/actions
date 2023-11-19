@@ -1,0 +1,75 @@
+name: release
+
+on:
+  repository_dispatch:
+    types: [release]
+
+jobs:
+  release:
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: 
+      contents: write
+      deployments: write
+      packages: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref }}
+
+      - name: build docker
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: ${{ github.repository }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          buildoptions: "--force-rm"
+          tags:  ${{ github.event.client_payload.version }}
+
+      - name: create release
+        env:
+          RELEASE_VERSION: ${{ github.event.client_payload.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${RELEASE_VERSION} --draft --title ${RELEASE_VERSION}          
+          
+
+      # - name: commit changes
+      #   uses: stefanzweifel/git-auto-commit-action@v5
+      #   with:
+      #     # Optional. Commit message for the created commit.
+      #     # Defaults to "Apply automatic changes"
+      #     commit_message: "release ${{ github.event.inputs.version }}"
+      #     # Optional. Local and remote branch name where commit is going to be pushed
+      #     #  to. Defaults to the current branch.
+      #     #  You might need to set `create_branch: true` if the branch does not exist.
+      #     branch: release/${{ github.event.inputs.version }}
+      #     create_branch: true
+      #     push_options: '--force'
+            
+      # - name: Start ${{ matrix.images.environment }} Deployment
+      #   uses: bobheadxi/deployments@v1.4.0
+      #   id: deployment
+      #   with:
+      #     step: start
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     env: ${{ matrix.images.environment }}
+
+      # # We don't rebuild the image to avoid that the latest tag and the release tags don't point to what the release tag is pointing to.
+      # # Instead, we pull the latest image and tag it.
+      # - name: Retag and Push Images
+      #   uses: akhilerm/tag-push-action@v2.1.0
+      #   with:
+      #     src: ghcr.io/likec4/actions-export:latest
+      #     dst: |
+      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}v5
+      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}${{ env.RELEASE_VERSION }}
+
+      # We use ^{} to recursively deference the tag to get the commit the tag is pointing at.
+      # Then, we use that reference to create new tags, so that the new tags point to the commit
+      # the original tag was pointing to, and not to the original tag.
+      # This notation is documented at https://git-scm.com/docs/gitrevisions#Documentation/gitrevisions.txt-emltrevgtemegemv0998em
