@@ -24,16 +24,16 @@ jobs:
       pull-requests: write
     steps:
       - uses: tibdex/github-app-token@v1
-        id: generate-token
+        id: likec4-bot
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_id: ${{ secrets.BOT_APP_ID }}
+          private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
       - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.likec4-bot.outputs.token }}
 
       - name: update Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -91,7 +91,7 @@ jobs:
       - name: create pull request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.likec4-bot.outputs.token }}
           commit-message: "release: ${{ github.event.inputs.version }}"
           title: "release: ${{ github.event.inputs.version }}"
           body: Update likec4 version to ${{ github.event.inputs.likec4 || 'latest' }}
