@@ -22,16 +22,17 @@ async function execBuild({
   output,
   base
 }: Inputs): Promise<void> {
+  const out = output || 'dist'
   const args = [
     ...asArg('--base', base),
-    ...asArg('--output', output),
+    ...asArg('--output', out),
     path
   ]
   await group(`build website`, async () => {
-    await exec('npx', ['likec4', 'build', ...args])
+    await exec('npx', ['likec4', 'build', ...args])    
     await cp(
-      resolve(output, 'index.html'),
-      resolve(output, '404.html'),
+      resolve(out, 'index.html'),
+      resolve(out, '404.html'),
     )
   })
 }
