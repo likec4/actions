@@ -10,7 +10,7 @@ on:
 
 jobs:
   prepare-release:
-    name: Build Docker Image
+    name: Prepare Release
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -25,6 +25,8 @@ jobs:
           replace: '  image: docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}'
           include: "action.yml"     
 
+      - run: cat action.yml      
+
       - name: commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
@@ -36,6 +38,7 @@ jobs:
           #  You might need to set `create_branch: true` if the branch does not exist.
           branch: release/${{ github.event.inputs.version }}
           create_branch: true
+          push_options: '--force'
             
       # - name: Start ${{ matrix.images.environment }} Deployment
       #   uses: bobheadxi/deployments@v1.4.0
