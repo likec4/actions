@@ -2,16 +2,15 @@ name: test
 on:
   push:
     branches:
-      - "release/**"
-    tags-ignore:
-      - "**"
+      - "release/*"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: checkout
+        uses: actions/checkout@v4
 
       - name: update action.yml to build locally
         run: |
