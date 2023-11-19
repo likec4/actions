@@ -1,0 +1,28 @@
+name: LikeC4
+description: LikeC4 GitHub Action
+author: likec4
+
+inputs:
+  action:
+    description: action to perform ("build"/"export"/"codegen")
+    required: false
+  export:
+    description: export views
+    required: false
+  path:
+    description: directory with likec4 sources
+    required: false
+  output:
+    description: output directory/file
+    required: false
+  base:
+    description: base url the app is being served from
+    required: false
+
+runs:
+  using: docker
+  image: 'Dockerfile'
+
+branding:
+  icon: image
+  color: gray-dark
