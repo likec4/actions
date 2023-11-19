@@ -9,7 +9,7 @@ on:
         default: 'v1.0.0'
 
 jobs:
-  build-docker:
+  prepare-release:
     name: Build Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -21,8 +21,8 @@ jobs:
       - name: update action.yml
         uses: jacobtomlinson/gha-find-replace@v3
         with:
-          find: "image:.*$"
-          replace: "docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}"
+          find: ".*image\\:.*"
+          replace: '  image: docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}'
           include: "action.yml"     
 
       - name: commit changes
