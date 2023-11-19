@@ -23,8 +23,17 @@ jobs:
       packages: write
       pull-requests: write
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: update Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -56,37 +65,38 @@ jobs:
           snapshot: true
           no_push: true
 
-      - name: commit changes
-        id: auto-commit-action
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          # Optional. Commit message for the created commit.
-          # Defaults to "Apply automatic changes"
-          commit_message: "release: ${{ github.event.inputs.version }}"
-          # Optional. Local and remote branch name where commit is going to be pushed
-          #  to. Defaults to the current branch.
-          #  You might need to set `create_branch: true` if the branch does not exist.          
-          tagging_message: ${{ github.event.inputs.version }}
-          branch: release/${{ github.event.inputs.version }}
-          create_branch: true
-          push_options: '--force'
-          skip_dirty_check: true
-
-      - name: repository dispatch - Release
-        if: steps.auto-commit-action.outputs.changes_detected == 'true'
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          event-type: release
-          client-payload: '{"ref": "refs/heads/release/${{ github.event.inputs.version }}", "version": "${{ github.event.inputs.version }}"}'
-
-      # - name: create pull request
-      #   uses: peter-evans/create-pull-request@v5
+      # - name: commit changes
+      #   id: auto-commit-action
+      #   uses: stefanzweifel/git-auto-commit-action@v5
       #   with:
-      #     commit-message: release ${{ github.event.inputs.version }}
-      #     title: "release: ${{ github.event.inputs.version }}"
-      #     body: Update likec4 version to ${{ github.event.inputs.likec4 || 'latest' }}
+      #     # Optional. Commit message for the created commit.
+      #     # Defaults to "Apply automatic changes"
+      #     commit_message: "release: ${{ github.event.inputs.version }}"
+      #     # Optional. Local and remote branch name where commit is going to be pushed
+      #     #  to. Defaults to the current branch.
+      #     #  You might need to set `create_branch: true` if the branch does not exist.          
+      #     tagging_message: ${{ github.event.inputs.version }}
       #     branch: release/${{ github.event.inputs.version }}
-      #     base: main           
+      #     create_branch: true
+      #     push_options: '--force'
+      #     skip_dirty_check: true
+
+      # - name: repository dispatch - Release
+      #   if: steps.auto-commit-action.outputs.changes_detected == 'true'
+      #   uses: peter-evans/repository-dispatch@v2
+      #   with:
+      #     event-type: release
+      #     client-payload: '{"ref": "refs/heads/release/${{ github.event.inputs.version }}", "version": "${{ github.event.inputs.version }}"}'
+
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: "release: ${{ github.event.inputs.version }}"
+          title: "release: ${{ github.event.inputs.version }}"
+          body: Update likec4 version to ${{ github.event.inputs.likec4 || 'latest' }}
+          branch: release/${{ github.event.inputs.version }}
+          base: main           
 
 
             
