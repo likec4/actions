@@ -21,11 +21,14 @@ inputs:
   base:
     description: base url the app is being served from
     required: false
+  likec4-version:
+    description: 'likec4 version to use (default: bundled with action)'
+    required: false
 
 runs:
   using: docker
-  # image: docker://ghcr.io/likec4/actions:latest
   image: 'Dockerfile'
+  # image: docker://ghcr.io/likec4/actions:v1
 
 branding:
   icon: image

@@ -1,37 +1,75 @@
-# LikeC4 Export
+# LikeC4 Github Action
 
-Export LikeC4 views to png.
+![GitHub release](https://img.shields.io/github/release/likec4/actions.svg)
+
+This action wraps [likec4](https://likec4.dev/docs/tools/cli/) CLI as a GitHub Action.
  
 ## Usage
+
+Build website:
 
 ```yaml
 ...
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: export
-        uses: likec4/actions-export@v1
+      - name: build
+        uses: likec4/actions@v1
         with:
-          out: out/likec4
+          action: build
+          path: src/likec4
+          output: dist
+          base: baseurl
 
       - name: upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: likec4
-          path: out/likec4
+          path: dist
+```
+
+Export diagrams to PNG:
+
+```yaml
+...
+    steps:
+      - name: export diagrams
+        uses: likec4/actions@v1
+        with:
+          export: png
+          path: src/likec4
+          output: images
+```
+
+Code generation:
+
+```yaml
+...
+    steps:
+      - name: code generation
+        uses: likec4/actions@v1
+        with:
+          codegen: react
+          output: __generated__/likec4.tsx
 ```
 
 ## Inputs
 
-|  INPUT  |  TYPE  | REQUIRED |  DEFAULT  |        DESCRIPTION               |
-|---------|--------|----------|-----------|----------------------------------|
-|   src   | string |  false   |   '.'     |   directory with likec4 sources  |
-|   out   | string |  false   |   '.'     |   directory for generated png    |
+| Name      | Description                                     |
+| --------- | ----------------------------------------------- |
+| `action`  | Action to perform (`build` / `export` / `codegen`) |
+| `export`  | Can be used instead of `action: export`           |
+| `codegen` | Can be used instead of `action: codegen`, same values as in [cli](https://likec4.dev/docs/tools/cli/)  |
+| `path`    | Path in repository to likec4 sources, root otherwise   |
+| `output`  | Output directory/file                            |
+| `base`    | Custom baseUrl for website                        |
 
+> All inputs are optional.  
+> By default builds a website to `dist` directory.
 
 ## Report Bugs
 
-Report bugs at https://github.com/likec4/actions-export/issues.
+Report bugs at https://github.com/likec4/actions/issues.
 
 If you are reporting a bug, please include:
 

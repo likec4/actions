@@ -1,19 +1,23 @@
 name: test
 on:
   push:
+    branches:
+      - "release/**"
+    tags-ignore:
+      - "**"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: build
         uses: ./ # Uses an action in the root directory
         with:
           action: build
-       
+
       - run: |
           ls -l dist/
 
@@ -41,4 +45,4 @@ jobs:
           output: mmd
 
       - run: |
-          ls -l mmd/          
+          ls -l mmd/

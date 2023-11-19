@@ -1,0 +1,130 @@
+name: prepare-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'version to release. Ex: v1.0.0'
+        required: true
+        default: 'v1.0.0'
+      likec4_version:
+        description: 'likec4 version (without v) to use. Ex: 0.47.2'
+        required: false
+        default: 'latest'
+
+env:
+  MAJOR_RELEASE_VERSION: v1
+
+jobs:
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      deployments: write
+      issues: write
+      packages: write
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # - name: Retrieve Current Release Version
+      #   # shellcheck disable=SC2062
+      #   run: |
+      #     RELEASE_VERSION="${{ github.event.inputs.version }}"          
+
+      #     if [ -z "${RELEASE_VERSION}" ]; then
+      #       echo "No release version found in environment, using event..."
+      #       RELEASE_VERSION="${{ github.event.release.name }}"
+      #     fi
+
+      #     # Check the RELEASE_VERSION again
+      #     # if [ -z "${RELEASE_VERSION}" ]; then
+      #     #  echo "Error RELEASE_VERSION is empty. Exiting..."
+      #     #  exit 1
+      #     # fi
+
+      #     # if ! echo "${RELEASE_VERSION}" | grep -E -o "v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+"; then
+      #     #   echo "Error: RELEASE_VERSION doesn't look like a semantic version: ${RELEASE_VERSION}"
+      #     #   exit 2
+      #     # fi
+
+      #     echo "RELEASE_VERSION=${RELEASE_VERSION}"
+      #     echo "SEMVER_VERSION=${RELEASE_VERSION#v}"
+      #     echo "SEMVER_MAJOR_VERSION=${SEMVER_VERSION%%.*}"
+      #     echo "SEMVER_MAJOR_VERSION_WITH_PREFIX=v${SEMVER_MAJOR_VERSION}"
+
+      #     {
+      #       echo "RELEASE_VERSION=${RELEASE_VERSION}"
+      #       echo "SEMVER_VERSION=${RELEASE_VERSION#v}"
+      #       echo "SEMVER_MAJOR_VERSION=${SEMVER_VERSION%%.*}"
+      #       echo "SEMVER_MAJOR_VERSION_WITH_PREFIX=v${SEMVER_MAJOR_VERSION}"
+      #     } >> "${GITHUB_ENV}"
+
+      - name: Setup Docker BuildX
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./
+          push: true
+          build-args: |
+            LIKEC4_VER=${{ github.event.inputs.likec4_version }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
+
+      - name: update action.yml
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "'Dockerfile'"
+          replace: "docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}"
+          regex: false
+          include: "action.yml"     
+
+      - name: commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # Optional. Commit message for the created commit.
+          # Defaults to "Apply automatic changes"
+          commit_message: "release ${{ github.event.inputs.version }}"
+          # Optional. Local and remote branch name where commit is going to be pushed
+          #  to. Defaults to the current branch.
+          #  You might need to set `create_branch: true` if the branch does not exist.
+          branch: release/${{ github.event.inputs.version }}
+          create_branch: true
+          tagging_message: ${{ github.event.inputs.version }}
+            
+      # - name: Start ${{ matrix.images.environment }} Deployment
+      #   uses: bobheadxi/deployments@v1.4.0
+      #   id: deployment
+      #   with:
+      #     step: start
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     env: ${{ matrix.images.environment }}
+
+      # # We don't rebuild the image to avoid that the latest tag and the release tags don't point to what the release tag is pointing to.
+      # # Instead, we pull the latest image and tag it.
+      # - name: Retag and Push Images
+      #   uses: akhilerm/tag-push-action@v2.1.0
+      #   with:
+      #     src: ghcr.io/likec4/actions-export:latest
+      #     dst: |
+      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}v5
+      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}${{ env.RELEASE_VERSION }}
+
+      # We use ^{} to recursively deference the tag to get the commit the tag is pointing at.
+      # Then, we use that reference to create new tags, so that the new tags point to the commit
+      # the original tag was pointing to, and not to the original tag.
+      # This notation is documented at https://git-scm.com/docs/gitrevisions#Documentation/gitrevisions.txt-emltrevgtemegemv0998em

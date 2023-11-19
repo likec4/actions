@@ -28,4 +28,4 @@ RUN npm install -g likec4@${LIKEC4_VER}
 
 COPY --from=builder /likec4-action/dist /likec4-action
 
-ENTRYPOINT ["node", "/likec4-action/index.mjs"]
+ENTRYPOINT ["node", "/likec4-action/index.js"]

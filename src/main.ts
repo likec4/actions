@@ -4,6 +4,7 @@ import { cp } from '@actions/io'
 import { resolve } from 'node:path'
 
 type Inputs = {
+  likec4: string[]
   path: string
   output: string
   base: string
@@ -18,6 +19,7 @@ function asArg(name: string, value: string): string[] {
 }
 
 async function execBuild({
+  likec4,
   path,
   output,
   base
@@ -29,7 +31,7 @@ async function execBuild({
     path
   ]
   await group(`build website`, async () => {
-    await exec('npx', ['likec4', 'build', ...args])    
+    await exec('npx', [...likec4, 'build', ...args])    
     await cp(
       resolve(out, 'index.html'),
       resolve(out, '404.html'),
@@ -38,6 +40,7 @@ async function execBuild({
 }
 
 async function execExport({
+  likec4,
   path,
   output
 }: Inputs): Promise<void> {
@@ -46,7 +49,7 @@ async function execExport({
     path
   ]
   await group(`export: png`, async () => {
-    await exec('npx', ['likec4', 'export', 'png', ...args])
+    await exec('npx', [...likec4, 'export', 'png', ...args])
   })
 }
 
@@ -54,6 +57,7 @@ const CodegenCommands = [
   'react', 'views', 'ts', 'views-data', 'dot', 'd2', 'mermaid', 'mmd'
 ]
 async function execCodegen(command: string, {
+  likec4,
   path,
   output
 }: Inputs): Promise<void> {
@@ -63,7 +67,7 @@ async function execCodegen(command: string, {
     path
   ]
   await group(`codegen: ${command}`, async () => {
-    await exec('npx', ['likec4', 'codegen', ...args])
+    await exec('npx', [...likec4, 'codegen', ...args])
   })
 }
 
@@ -78,9 +82,15 @@ export async function run(): Promise<void> {
     const codegen = getInput('codegen')
 
     const inputs: Inputs = {
+      likec4: ['--no-install', 'likec4'],
       path: getInput('path'),
       output: getInput('output'),
       base: getInput('base')
+    }
+
+    const version = getInput('likec4-version')
+    if (version !== '') {
+      inputs.likec4 = [`likec4@${version}`]      
     }
 
     action != '' && debug(`action: ${action}`)
