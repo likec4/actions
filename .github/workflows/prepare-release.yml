@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 10
     permissions: 
       contents: write
+      packages: write
       pull-requests: write
     steps:
       - name: checkout
@@ -32,7 +33,7 @@ jobs:
           replace: "ARG LIKEC4_VER=${{ github.event.inputs.likec4 || 'latest' }}"          
           include: "Dockerfile"        
 
-      - name: review
+      - name: review Dockerfile
         run: cat Dockerfile
 
       - name: update action.yml
@@ -42,15 +43,25 @@ jobs:
           replace: '  image: docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}'
           include: "action.yml"     
 
-      - name: review
+      - name: review action.yml
         run: cat action.yml 
+
+      - name: build docker
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: ${{ github.repository }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          snapshot: true
+          no_push: true
 
       - name: create pull request
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: release ${{ github.event.inputs.version }}
-          title: release ${{ github.event.inputs.version }}
-          # body: Update changelog to reflect release changes
+          title: "release: ${{ github.event.inputs.version }}"
+          body: Update likec4 version to ${{ github.event.inputs.likec4 || 'latest' }}
           branch: release/${{ github.event.inputs.version }}
           base: main           
 
@@ -89,3 +100,4 @@ jobs:
       # Then, we use that reference to create new tags, so that the new tags point to the commit
       # the original tag was pointing to, and not to the original tag.
       # This notation is documented at https://git-scm.com/docs/gitrevisions#Documentation/gitrevisions.txt-emltrevgtemegemv0998em
+build-docker-snapshot:
