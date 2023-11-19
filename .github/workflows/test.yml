@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: update action.yml to build locally
+        run: |
+          sed -i 's/.*image\:.*/  image\: \"Dockerfile\"/' action.yml
+          cat action.yml      
+
       - name: build
         uses: ./ # Uses an action in the root directory
         with:

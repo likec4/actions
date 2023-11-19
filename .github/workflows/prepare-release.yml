@@ -7,9 +7,14 @@ on:
         description: 'version to release. Ex: v1.0.0'
         required: true
         default: 'v1.0.0'
+      likec4:
+        description: 'likec4 version to bundle. Ex: 1.0.0'
+        required: false
+        default: 'latest'
 
 jobs:
   prepare-release:
+    if: "github.ref == 'refs/heads/main'"
     name: Prepare Release
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -20,6 +25,16 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      - name: update Dockerfile
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "ARG LIKEC4_VER.*"
+          replace: "ARG LIKEC4_VER=${{ github.event.inputs.likec4 || 'latest' }}"          
+          include: "Dockerfile"        
+
+      - name: review
+        run: cat Dockerfile
+
       - name: update action.yml
         uses: jacobtomlinson/gha-find-replace@v3
         with:
@@ -27,20 +42,30 @@ jobs:
           replace: '  image: docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}'
           include: "action.yml"     
 
-      - run: cat action.yml      
+      - name: review
+        run: cat action.yml 
 
-      - name: commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v5
         with:
-          # Optional. Commit message for the created commit.
-          # Defaults to "Apply automatic changes"
-          commit_message: "release ${{ github.event.inputs.version }}"
-          # Optional. Local and remote branch name where commit is going to be pushed
-          #  to. Defaults to the current branch.
-          #  You might need to set `create_branch: true` if the branch does not exist.
+          commit-message: release ${{ github.event.inputs.version }}
+          title: release ${{ github.event.inputs.version }}
+          # body: Update changelog to reflect release changes
           branch: release/${{ github.event.inputs.version }}
-          create_branch: true
-          push_options: '--force'
+          base: main           
+
+      # - name: commit changes
+      #   uses: stefanzweifel/git-auto-commit-action@v5
+      #   with:
+      #     # Optional. Commit message for the created commit.
+      #     # Defaults to "Apply automatic changes"
+      #     commit_message: "release ${{ github.event.inputs.version }}"
+      #     # Optional. Local and remote branch name where commit is going to be pushed
+      #     #  to. Defaults to the current branch.
+      #     #  You might need to set `create_branch: true` if the branch does not exist.
+      #     branch: release/${{ github.event.inputs.version }}
+      #     create_branch: true
+      #     push_options: '--force'
             
       # - name: Start ${{ matrix.images.environment }} Deployment
       #   uses: bobheadxi/deployments@v1.4.0
