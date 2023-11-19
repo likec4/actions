@@ -29,7 +29,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           buildoptions: "--force-rm"
-          tags:  ${{ github.event.client_payload.version }}
 
       - name: create release
         env:
