@@ -7,7 +7,10 @@ inputs:
     description: action to perform ("build"/"export"/"codegen")
     required: false
   export:
-    description: export views
+    description: export views ("png")
+    required: false
+  codegen:
+    description: generate code
     required: false
   path:
     description: directory with likec4 sources

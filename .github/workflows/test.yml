@@ -1,3 +1,4 @@
+name: test
 on:
   push:
 
@@ -8,7 +9,36 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: run action
+      - name: build
         uses: ./ # Uses an action in the root directory
         with:
           action: build
+       
+      - run: |
+          ls -l dist/
+
+      - name: export
+        uses: ./ # Uses an action in the root directory
+        with:
+          export: png
+          output: images
+
+      - run: |
+          ls -l images/
+
+      - name: codegen react
+        uses: ./ # Uses an action in the root directory
+        with:
+          action: codegen
+
+      - run: |
+          ls -l
+
+      - name: codegen mmd
+        uses: ./ # Uses an action in the root directory
+        with:
+          codegen: mmd
+          output: mmd
+
+      - run: |
+          ls -l mmd/          

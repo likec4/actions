@@ -1,5 +1,7 @@
-import { getInput, setFailed, summary, debug, info } from '@actions/core'
+import { debug, getInput, info, group, setFailed } from '@actions/core'
 import { exec } from '@actions/exec'
+import { cp } from '@actions/io'
+import { resolve } from 'node:path'
 
 type Inputs = {
   path: string
@@ -12,33 +14,56 @@ function asArg(name: string, value: string): string[] {
     return []
   }
   debug(`${name}: ${value}`)
-  return ['--' + name, value]
+  return [name, value]
 }
 
-async function build({
+async function execBuild({
   path,
   output,
   base
 }: Inputs): Promise<void> {
   const args = [
-    ...asArg('base', base),
-    ...asArg('output', output),
+    ...asArg('--base', base),
+    ...asArg('--output', output),
     path
   ]
-  info(`Building...`)
-  await exec('npx', ['likec4', 'build', ...args])
+  await group(`build website`, async () => {
+    await exec('npx', ['likec4', 'build', ...args])
+    await cp(
+      resolve(output, 'index.html'),
+      resolve(output, '404.html'),
+    )
+  })
 }
 
-async function exportPng({
+async function execExport({
   path,
   output
 }: Inputs): Promise<void> {
   const args = [
-    ...asArg('output', output),
+    ...asArg('--output', output),
     path
   ]
-  info(`Exporting to PNG...`)
-  await exec('npx', ['likec4', 'export', 'png', ...args])
+  await group(`export: png`, async () => {
+    await exec('npx', ['likec4', 'export', 'png', ...args])
+  })
+}
+
+const CodegenCommands = [
+  'react', 'views', 'ts', 'views-data', 'dot', 'd2', 'mermaid', 'mmd'
+]
+async function execCodegen(command: string, {
+  path,
+  output
+}: Inputs): Promise<void> {
+  const args = [
+    command,
+    ...asArg('-o', output),
+    path
+  ]
+  await group(`codegen: ${command}`, async () => {
+    await exec('npx', ['likec4', 'codegen', ...args])
+  })
 }
 
 /**
@@ -49,6 +74,7 @@ export async function run(): Promise<void> {
   try {
     const action = getInput('action')
     const exportTo = getInput('export')
+    const codegen = getInput('codegen')
 
     const inputs: Inputs = {
       path: getInput('path'),
@@ -58,21 +84,35 @@ export async function run(): Promise<void> {
 
     action != '' && debug(`action: ${action}`)
     exportTo != '' && debug(`export: ${exportTo}`)
+    codegen != '' && debug(`codegen: ${codegen}`)
     debug(`cwd: ${process.cwd()}`)
     debug(`path: ${inputs.path}`)
 
-
-    if (action === 'export' || (action === '' && exportTo === 'png')) {
-      await exportPng(inputs)
+    if (action === 'codegen' || (action === '' && codegen !== '')) {
+      const command = codegen || 'react'
+      if (!CodegenCommands.includes(command)) {
+        setFailed(`invalid codegen: ${command}\nAllowed values: ${CodegenCommands.map(c => `"${c}"`).join(', ')}`)
+        return
+      }
+      await execCodegen(command, inputs)
       return
     }
 
-    if (action === 'build' || (action === '' && exportTo === '')) {
-      await build(inputs)
+    if (action === 'export' || (action === '' && exportTo !== '')) {
+      if (exportTo !== 'png') {
+        setFailed(`invalid export: ${exportTo}\nAllowed values: png`)
+        return
+      }
+      await execExport(inputs)
       return
     }
 
-    setFailed(`invalid input`)
+    if (action === 'build' || (action === '' && exportTo === '' && codegen === '')) {
+      await execBuild(inputs)
+      return
+    }
+
+    setFailed(`invalid input, can't determine action`)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) setFailed(error.message)
