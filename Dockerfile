@@ -9,6 +9,8 @@ COPY .yarn/releases/ .yarn/releases
 
 RUN yarn install --immutable
 
+ENV NODE_ENV=production
+
 COPY src src
 COPY tsconfig.json .
 
@@ -26,4 +28,4 @@ RUN npm install -g likec4@${LIKEC4_VER}
 
 COPY --from=builder /likec4-action/dist /likec4-action
 
-ENTRYPOINT ["node", "/likec4-action/index.js"]
+ENTRYPOINT ["node", "/likec4-action/index.mjs"]
