@@ -18,12 +18,8 @@ jobs:
     name: Prepare Release
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions: 
-      contents: write
-      packages: write
-      pull-requests: write
     steps:
-      - uses: tibdex/github-app-token@v2
+      - uses: wow-actions/use-app-token@v2
         id: likec4-bot
         with:
           app_id: ${{ secrets.BOT_APP_ID }}
@@ -33,7 +29,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ steps.likec4-bot.outputs.token }}
 
       - name: update Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -59,8 +54,8 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ env.BOT_NAME }}[bot]
+          password: ${{ env.BOT_TOKEN }}
           registry: ghcr.io
           snapshot: true
           no_push: true
@@ -91,12 +86,19 @@ jobs:
       - name: create pull request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ steps.likec4-bot.outputs.token }}
+          token: ${{ env.BOT_TOKEN }}
           commit-message: "release: ${{ github.event.inputs.version }}"
           title: "release: ${{ github.event.inputs.version }}"
-          body: Update likec4 version to ${{ github.event.inputs.likec4 || 'latest' }}
+          body: |
+            likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
           branch: release/${{ github.event.inputs.version }}
-          base: main           
+          base: main
+        env:
+          # Use app name in the environment variable named "BOT_NAME"
+          GIT_AUTHOR_NAME: ${{ env.BOT_NAME }}
+          GIT_AUTHOR_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com
+          GIT_COMMITTER_NAME: ${{ env.BOT_NAME }}
+          GIT_COMMITTER_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com                
 
 
             
