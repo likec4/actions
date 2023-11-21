@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   test:
-    name: Test Release PR
+    name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -65,7 +65,7 @@ jobs:
   build-docker:
     if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'release/v')
     needs: [test]
-    name: Build Docker
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
