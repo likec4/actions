@@ -16,12 +16,12 @@ permissions:
 
 jobs:
   test:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
+    name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: checkout
-        uses: actions/checkout@v4        
+        uses: actions/checkout@v4
 
       - name: update action.yml to build locally
         run: |
@@ -62,13 +62,19 @@ jobs:
       - run: |
           ls -l mmd/
 
-  deploy-package:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
+  build-docker:
+    if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'release/v')
     needs: [test]
-    name: build-package
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
       - name: start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
@@ -76,12 +82,7 @@ jobs:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: release
-          ref: ${{ github.head_ref }}
-
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          ref: ${{ github.head_ref }}          
 
       - id: release
         name: get version
