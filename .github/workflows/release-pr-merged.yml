@@ -25,12 +25,9 @@ jobs:
         name: get version
         run: |
           HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")
+          HEAD_REF=${HEAD_REF/release\/}
           echo "HEAD_REF=${HEAD_REF}"
-          HEAD_REF=${HEAD_REF/refs\/heads\//}
-          echo "HEAD_REF=${HEAD_REF}"
-          RELEASE_VERSION=${RELEASE_VERSION/release\/v/}
-          echo "RELEASE_VERSION=${RELEASE_VERSION}"
-          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version=${HEAD_REF}" >> "$GITHUB_OUTPUT"
 
       - name: create tag
         env:
