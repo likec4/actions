@@ -36,6 +36,7 @@ jobs:
           TAG="${{ github.event.inputs.version }}"
           if [ "$(git tag -l "${TAG}")"  ]; then
             echo "::error::Tag ${TAG} exists"
+            exit 1
           fi          
 
       - name: update Dockerfile
@@ -105,12 +106,15 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ env.BOT_TOKEN }}
+          committer: ${{ env.BOT_NAME }}@users.noreply.github.com
+          author: ${{ env.BOT_NAME }}@users.noreply.github.com
           commit-message: "release: ${{ github.event.inputs.version }}"
           title: "release: ${{ github.event.inputs.version }}"
           body: |
             likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
           branch: release/${{ github.event.inputs.version }}
           base: main
+          delete-branch: true
         env:
           # Use app name in the environment variable named "BOT_NAME"
           GIT_AUTHOR_NAME: ${{ env.BOT_NAME }}
