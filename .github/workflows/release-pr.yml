@@ -6,8 +6,11 @@ on:
       - main
 
 concurrency:
-  group:  ${{ github.workflow }}-${{github.event_name}}-${{ github.head_ref }}
+  group:  ${{ github.workflow }}-${{github.event_name}}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
+
+env:
+  IS_RELEASE: ${{ startsWith(github.event.pull_request.head.ref || github.head_ref, 'refs/heads/release/v') }}
 
 jobs:
   test:    
@@ -16,6 +19,20 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+
+      - id: pr
+        run: |
+          echo "${{env.IS_RELEASE}}"
+          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")
+          IS_RELEASE=$(printf "%q" "${{ env.IS_RELEASE }}")
+          echo "IS_RELEASE=${IS_RELEASE}"
+          echo "HEAD_REF=${HEAD_REF}"
+          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
+          echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
+
+          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"          
+  
+
 
       - name: update action.yml to build locally
         run: |
@@ -57,7 +74,7 @@ jobs:
           ls -l mmd/
 
   deploy-release:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
+    if: env.IS_RELEASE == 'true'
     needs: [test]
     name: Build Docker
     runs-on: ubuntu-latest
