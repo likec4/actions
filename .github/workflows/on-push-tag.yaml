@@ -13,19 +13,11 @@ permissions:
 
 jobs:
 
-  build-package:
-    name: build package
+  build-docker:
+    name: build docker for tag
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: start deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: release
-
       - name: checkout
         uses: actions/checkout@v4  
         with:
@@ -41,20 +33,10 @@ jobs:
           registry: ghcr.io
           buildoptions: "--force-rm"
           tag_names: true
-
-      - name: update deployment status
-        uses: bobheadxi/deployments@v1
-        if: always()
-        with:
-          step: finish
-          password: ${{ env.BOT_TOKEN }}
-          status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}                    
  
   github-release:
-    name: github release
-    needs: [build-package]
+    name: github release for tag
+    needs: [build-docker]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -84,7 +66,7 @@ jobs:
         id: semver_parser 
         uses: booxmedialtd/ws-action-parse-semver@v1
         with:
-          input_string: ${{ github.ref }}
+          input_string: ${{ github.ref_name }}
           version_extractor_regex: '\/v(.*)$' 
 
       - name: move tags
