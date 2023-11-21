@@ -1,13 +1,18 @@
 name: release-pr
 
 on:
-  pull_request:
+  pull_request:    
     branches:
       - main
 
 concurrency:
-  group:  ${{ github.workflow }}-${{github.event_name}}-${{ github.head_ref }}
+  group:  ${{ github.workflow }}-${{github.event_name}}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
+  deployments: write
+  packages: write
 
 jobs:
   test:    
@@ -56,102 +61,64 @@ jobs:
       - run: |
           ls -l mmd/
 
-  deploy-release:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
+  deploy-package:
+    if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'release/v') 
     needs: [test]
-    name: Build Docker
+    name: build-package
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: wow-actions/use-app-token@v2
-        id: likec4-bot
-        with:
-          app_id: ${{ secrets.BOT_APP_ID }}
-          private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
-
       - name: start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
         with:
           step: start
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           env: release
+          ref: ${{ github.event.pull_request.head.ref || github.head_ref }}
 
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - id: pr
-        run: |
-          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")                    
-          echo "::debug::HEAD_REF=${HEAD_REF}"
-          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
-          echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
+      - name: parse semver
+        id: semver_parser 
+        uses: booxmedialtd/ws-action-parse-semver@v1
+        with:
+          input_string: ${{ github.event.pull_request.head.ref || github.head_ref }}
+          version_extractor_regex: '\/v(.*)$'
 
-          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"          
+      # - id: pr
+      #   run: |
+      #     HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")
+      #     HEAD_REF=${HEAD_REF/refs\/heads\//}
+      #     echo "HEAD_REF=${HEAD_REF}"
+      #     RELEASE_REF=${HEAD_REF/release\//}
+      #     echo "RELEASE_REF=${RELEASE_REF}"
+      #     RELEASE_REF=${RELEASE_REF/v/}
+      #     echo "RELEASE_REF=${RELEASE_REF}"
+          
+      #     RELEASE_VERSION=${HEAD_REF/release\/v/}
+      #     echo "RELEASE_VERSION=${RELEASE_VERSION}"
+      #     echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"          
 
       - name: build docker
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           name: ${{ github.repository }}
-          username: ${{ env.BOT_NAME }}
-          password: ${{ env.BOT_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           buildoptions: "--force-rm"
-          tags: "${{ steps.pr.outputs.version }}"
+          tags: "v${{ steps.semver_parser.outputs.fullversion }}"
 
       - name: update deployment status
         uses: bobheadxi/deployments@v1
         if: always()
         with:
           step: finish
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
           env: ${{ steps.deployment.outputs.env }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}          
-
-  # prepare-release:
-  #   if: "github.ref == 'refs/heads/main'"
-  #   name: Prepare Release
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 10
-  #   steps:
-  #     - uses: wow-actions/use-app-token@v2
-  #       id: likec4-bot
-  #       with:
-  #         app_id: ${{ secrets.BOT_APP_ID }}
-  #         private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
-
-  #     - name: checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: update Dockerfile
-  #       uses: jacobtomlinson/gha-find-replace@v3
-  #       with:
-  #         find: "ARG LIKEC4_VER.*"
-  #         replace: "ARG LIKEC4_VER=${{ github.event.inputs.likec4 || 'latest' }}"          
-  #         include: "Dockerfile"        
-
-  #     - name: review Dockerfile
-  #       run: cat Dockerfile
-
-  #     - name: update action.yml
-  #       uses: jacobtomlinson/gha-find-replace@v3
-  #       with:
-  #         find: ".*image\\:.*"
-  #         replace: '  image: docker://ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}'
-  #         include: "action.yml"     
-
-  #     - name: review action.yml
-  #       run: cat action.yml 
-
-  #     - name: build docker
-  #       uses: elgohr/Publish-Docker-Github-Action@v5
-  #       with:
-  #         name: ${{ github.repository }}
-  #         username: ${{ env.BOT_NAME }}[bot]
-  #         password: ${{ env.BOT_TOKEN }}
-  #         registry: ghcr.io
-  #         snapshot: true
-  #         no_push: true
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
