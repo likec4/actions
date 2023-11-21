@@ -29,6 +29,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ env.BOT_TOKEN }}
+
+      - name: check for tag
+        run: |
+          TAG="${{ github.event.inputs.version }}"
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "::error::Tag ${TAG} exists"
+          fi          
 
       - name: update Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -60,21 +68,31 @@ jobs:
           snapshot: true
           no_push: true
 
-      # - name: commit changes
-      #   id: auto-commit-action
-      #   uses: stefanzweifel/git-auto-commit-action@v5
-      #   with:
-      #     # Optional. Commit message for the created commit.
-      #     # Defaults to "Apply automatic changes"
-      #     commit_message: "release: ${{ github.event.inputs.version }}"
-      #     # Optional. Local and remote branch name where commit is going to be pushed
-      #     #  to. Defaults to the current branch.
-      #     #  You might need to set `create_branch: true` if the branch does not exist.          
-      #     tagging_message: ${{ github.event.inputs.version }}
-      #     branch: release/${{ github.event.inputs.version }}
-      #     create_branch: true
-      #     push_options: '--force'
-      #     skip_dirty_check: true
+      - id: commit-message
+        shell: bash
+        run: |
+          {
+            echo 'value<<EOF'
+            echo 'release: ${{ github.event.inputs.version }}'
+            echo 'likec4 version: ${{ github.event.inputs.likec4 }}'
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: commit changes
+        id: auto-commit-action
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # Optional. Commit message for the created commit.
+          # Defaults to "Apply automatic changes"
+          commit_message: ${{ steps.commit-message.outputs.value }}
+          # Optional. Local and remote branch name where commit is going to be pushed
+          #  to. Defaults to the current branch.
+          #  You might need to set `create_branch: true` if the branch does not exist.          
+          tagging_message: ${{ github.event.inputs.version }}
+          # Optional commit user and author settings
+          commit_user_name: ${{ env.BOT_NAME }}
+          commit_user_email: ${{ env.BOT_NAME }}@users.noreply.github.com
+          commit_author: ${{ env.BOT_NAME }} <${{ env.BOT_NAME }}@users.noreply.github.com>
 
       # - name: repository dispatch - Release
       #   if: steps.auto-commit-action.outputs.changes_detected == 'true'
@@ -83,24 +101,22 @@ jobs:
       #     event-type: release
       #     client-payload: '{"ref": "refs/heads/release/${{ github.event.inputs.version }}", "version": "${{ github.event.inputs.version }}"}'
 
-      - name: create pull request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ env.BOT_TOKEN }}
-          commit-message: "release: ${{ github.event.inputs.version }}"
-          title: "release: ${{ github.event.inputs.version }}"
-          body: |
-            likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
-          branch: release/${{ github.event.inputs.version }}
-          base: main
-        env:
-          # Use app name in the environment variable named "BOT_NAME"
-          GIT_AUTHOR_NAME: ${{ env.BOT_NAME }}
-          GIT_AUTHOR_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com
-          GIT_COMMITTER_NAME: ${{ env.BOT_NAME }}
-          GIT_COMMITTER_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com                
-
-
+      # - name: create pull request
+      #   uses: peter-evans/create-pull-request@v5
+      #   with:
+      #     token: ${{ env.BOT_TOKEN }}
+      #     commit-message: "release: ${{ github.event.inputs.version }}"
+      #     title: "release: ${{ github.event.inputs.version }}"
+      #     body: |
+      #       likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
+      #     branch: release/${{ github.event.inputs.version }}
+      #     base: main
+      #   env:
+      #     # Use app name in the environment variable named "BOT_NAME"
+      #     GIT_AUTHOR_NAME: ${{ env.BOT_NAME }}
+      #     GIT_AUTHOR_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com
+      #     GIT_COMMITTER_NAME: ${{ env.BOT_NAME }}
+      #     GIT_COMMITTER_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com                
             
       # - name: Start ${{ matrix.images.environment }} Deployment
       #   uses: bobheadxi/deployments@v1.4.0
@@ -124,3 +140,4 @@ jobs:
       # Then, we use that reference to create new tags, so that the new tags point to the commit
       # the original tag was pointing to, and not to the original tag.
       # This notation is documented at https://git-scm.com/docs/gitrevisions#Documentation/gitrevisions.txt-emltrevgtemegemv0998em      
+      
