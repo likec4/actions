@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
           token: ${{ env.BOT_TOKEN }}
 
       - name: check for tag
@@ -59,15 +60,17 @@ jobs:
       - name: review action.yml
         run: cat action.yml 
 
-      - name: build docker
-        uses: elgohr/Publish-Docker-Github-Action@v5
+      - name: create pull request
+        uses: peter-evans/create-pull-request@v5
         with:
-          name: ${{ github.repository }}
-          username: ${{ env.BOT_NAME }}[bot]
-          password: ${{ env.BOT_TOKEN }}
-          registry: ghcr.io
-          snapshot: true
-          no_push: true
+          token: ${{ env.BOT_TOKEN }}
+          commit-message: "release: ${{ github.event.inputs.version }}"
+          title: "release: ${{ github.event.inputs.version }}"
+          body: |
+            likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
+          branch: release/${{ github.event.inputs.version }}
+          base: main
+          delete-branch: true        
 
       # - id: commit-message
       #   shell: bash
@@ -101,47 +104,3 @@ jobs:
       #   with:
       #     event-type: release
       #     client-payload: '{"ref": "refs/heads/release/${{ github.event.inputs.version }}", "version": "${{ github.event.inputs.version }}"}'
-
-      - name: create pull request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ env.BOT_TOKEN }}
-          committer: ${{ env.BOT_NAME }}@users.noreply.github.com
-          author: ${{ env.BOT_NAME }}@users.noreply.github.com
-          commit-message: "release: ${{ github.event.inputs.version }}"
-          title: "release: ${{ github.event.inputs.version }}"
-          body: |
-            likec4 version: ${{ github.event.inputs.likec4 || 'latest' }}
-          branch: release/${{ github.event.inputs.version }}
-          base: main
-          delete-branch: true
-        env:
-          # Use app name in the environment variable named "BOT_NAME"
-          GIT_AUTHOR_NAME: ${{ env.BOT_NAME }}
-          GIT_AUTHOR_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com
-          GIT_COMMITTER_NAME: ${{ env.BOT_NAME }}
-          GIT_COMMITTER_EMAIL: ${{ env.BOT_NAME }}@users.noreply.github.com
-            
-      # - name: Start ${{ matrix.images.environment }} Deployment
-      #   uses: bobheadxi/deployments@v1.4.0
-      #   id: deployment
-      #   with:
-      #     step: start
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     env: ${{ matrix.images.environment }}
-
-      # # We don't rebuild the image to avoid that the latest tag and the release tags don't point to what the release tag is pointing to.
-      # # Instead, we pull the latest image and tag it.
-      # - name: Retag and Push Images
-      #   uses: akhilerm/tag-push-action@v2.1.0
-      #   with:
-      #     src: ghcr.io/likec4/actions-export:latest
-      #     dst: |
-      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}v5
-      #       ghcr.io/github/super-linter:${{ matrix.images.prefix }}${{ env.RELEASE_VERSION }}
-
-      # We use ^{} to recursively deference the tag to get the commit the tag is pointing at.
-      # Then, we use that reference to create new tags, so that the new tags point to the commit
-      # the original tag was pointing to, and not to the original tag.
-      # This notation is documented at https://git-scm.com/docs/gitrevisions#Documentation/gitrevisions.txt-emltrevgtemegemv0998em      
-      
