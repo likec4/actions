@@ -16,7 +16,6 @@ permissions:
 
 jobs:
   test:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -62,13 +61,18 @@ jobs:
       - run: |
           ls -l mmd/
 
-  deploy-package:
-    if: startsWith(github.head_ref, 'refs/heads/release/v')
+  build-package:
+    if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'refs/heads/release/v')
     needs: [test]
     name: build-package
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
@@ -76,12 +80,7 @@ jobs:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: release
-          ref: ${{ github.head_ref }}
-
-      - name: checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          ref: ${{ github.head_ref }}          
 
       - id: release
         name: get version
