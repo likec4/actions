@@ -89,6 +89,9 @@ jobs:
 
       - name: move tags
         run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
           MAJOR="v${{ steps.semver_parser.outputs.major }}"          
           git tag -fa $MAJOR -m "update ${MAJOR} tag"
           git push origin $MAJOR --force
