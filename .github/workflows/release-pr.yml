@@ -9,25 +9,33 @@ concurrency:
   group:  ${{ github.workflow }}-${{github.event_name}}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-env:
-  IS_RELEASE: ${{ startsWith(github.event.pull_request.head.ref || github.head_ref, 'refs/heads/release/v') }}
-
 jobs:
   test:    
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4        
+
+      - name: parse semver
+        id: semver_parser 
+        uses: booxmedialtd/ws-action-parse-semver@v1
+        with:
+          input_string: ${{ github.event.pull_request.head.ref || github.head_ref }}
+          version_extractor_regex: '\/v(.*)$'
 
       - id: pr
         run: |
-          echo "${{env.IS_RELEASE}}"
+          echo "v${{ steps.semver_parser.outputs.fullversion }}"
+
           HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")
-          IS_RELEASE=$(printf "%q" "${{ env.IS_RELEASE }}")
-          echo "IS_RELEASE=${IS_RELEASE}"
           echo "HEAD_REF=${HEAD_REF}"
-          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
+          HEAD_REF=${HEAD_REF/refs\/heads\//}
+          echo "HEAD_REF=${HEAD_REF}"
+          HEAD_REF=${HEAD_REF/release\//}
+          echo "HEAD_REF=${HEAD_REF}"          
+          
+          RELEASE_VERSION=${HEAD_REF/v/}
           echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
 
           echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"          
@@ -74,7 +82,7 @@ jobs:
           ls -l mmd/
 
   deploy-release:
-    if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'refs/heads/release/v') 
+    if: startsWith(github.event.pull_request.head.ref || github.head_ref, 'release/v') 
     needs: [test]
     name: Build Docker
     runs-on: ubuntu-latest
@@ -91,20 +99,21 @@ jobs:
         id: deployment
         with:
           step: start
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ env.BOT_TOKEN }}
           env: release
 
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ env.BOT_TOKEN }}
 
-      - id: pr
-        run: |
-          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")                    
-          echo "::debug::HEAD_REF=${HEAD_REF}"
-          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
-          echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
-
-          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"          
+      - name: parse semver
+        id: semver_parser 
+        uses: booxmedialtd/ws-action-parse-semver@v1
+        with:
+          input_string: ${{ github.event.pull_request.head.ref || github.head_ref }}
+          version_extractor_regex: '\/v(.*)$'
 
       - name: build docker
         uses: elgohr/Publish-Docker-Github-Action@v5
@@ -114,14 +123,14 @@ jobs:
           password: ${{ env.BOT_TOKEN }}
           registry: ghcr.io
           buildoptions: "--force-rm"
-          tags: "${{ steps.pr.outputs.version }}"
+          tags: "v${{ steps.semver_parser.outputs.fullversion }}"
 
       - name: update deployment status
         uses: bobheadxi/deployments@v1
         if: always()
         with:
           step: finish
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ env.BOT_TOKEN }}
           status: ${{ job.status }}
           env: ${{ steps.deployment.outputs.env }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}          

@@ -3,12 +3,10 @@ name: release-pr-merged
 on:
   pull_request:
     types: [closed]
-    branches:
-      - main
 
 jobs:
   if_merged:
-    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'refs/heads/release/v')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref || github.head_ref , 'release/v')
     runs-on: ubuntu-latest
     steps:    
       - uses: wow-actions/use-app-token@v2
@@ -26,10 +24,12 @@ jobs:
       - id: release
         name: get version
         run: |
-          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")                    
-          echo "::debug::HEAD_REF=${HEAD_REF}"
-          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
-          echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
+          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")
+          echo "HEAD_REF=${HEAD_REF}"
+          HEAD_REF=${HEAD_REF/refs\/heads\//}
+          echo "HEAD_REF=${HEAD_REF}"
+          RELEASE_VERSION=${RELEASE_VERSION/release\/v/}
+          echo "RELEASE_VERSION=${RELEASE_VERSION}"
           echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: create tag
