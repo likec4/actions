@@ -75,6 +75,7 @@ jobs:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
           env: release
+          ref: ${{ github.event.pull_request.head.ref || github.head_ref }}
 
       - name: checkout
         uses: actions/checkout@v4
@@ -110,7 +111,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           buildoptions: "--force-rm"
-          tag_names: true
           tags: "v${{ steps.semver_parser.outputs.fullversion }}"
 
       - name: update deployment status
