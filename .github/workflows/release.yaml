@@ -5,46 +5,31 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+  deployments: write
+  packages: write
+  actions: write      
+
 jobs:
 
   build-package:
     name: build package
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write
-      deployments: write
-      packages: write
-      actions: write
     steps:
-      # - uses: wow-actions/use-app-token@v2
-      #   id: likec4-bot
-      #   with:
-      #     app_id: ${{ secrets.BOT_APP_ID }}
-      #     private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
-
       - name: start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: release          
-
-      # - id: tag
-      #   run: |
-      #     # "Set the tag name..."
-      #     REF=$(printf "%q" "${{ github.ref }}")
-      #     VERSION=${REF/refs\/tags\/v/}
-      #     echo "version={value}" >> "$GITHUB_OUTPUT"
-      #     echo "::set-output name=tag::$(eval printf "%s" "$TAG")"
-      #   shell: bash    
+          env: release
 
       - name: checkout
         uses: actions/checkout@v4  
         with:
-          # token: ${{ env.BOT_TOKEN }}
-          fetch-depth: 0      
+          fetch-depth: 0
           fetch-tags: true
 
       - name: build package
@@ -72,12 +57,11 @@ jobs:
     needs: [build-package]
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write
     steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           fetch-tags: true
 
       - name: create release
@@ -89,15 +73,13 @@ jobs:
           
   move-tags:
     name: move tags
-    needs: [build-package]
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write
     steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           fetch-tags: true
 
       - name: parse semver

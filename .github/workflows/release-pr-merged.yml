@@ -1,0 +1,51 @@
+name: release-pr-merged
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  if_merged:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'refs/heads/release/v')
+    runs-on: ubuntu-latest
+    steps:    
+      - uses: wow-actions/use-app-token@v2
+        id: likec4-bot
+        with:
+          app_id: ${{ secrets.BOT_APP_ID }}
+          private_key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ env.BOT_TOKEN }}          
+
+      - id: release
+        name: get version
+        run: |
+          HEAD_REF=$(printf "%q" "${{ github.event.pull_request.head.ref || github.head_ref }}")                    
+          echo "::debug::HEAD_REF=${HEAD_REF}"
+          RELEASE_VERSION=${HEAD_REF/refs\/heads\/release\//}          
+          echo "::debug::RELEASE_VERSION=${RELEASE_VERSION}"
+          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: create tag
+        env:
+          TAG: ${{ steps.release.outputs.version }}
+          SHA: ${{ github.sha }}
+          MESSAGE: "release ${{ steps.release.outputs.version }}"
+        run: |
+          if [ "$(git tag -l "${TAG}")"  ]; then
+            echo "::warning::tag ${TAG} exists"
+            echo "::warning::skip create tag" 
+            exit 0
+          fi
+
+          git config user.name "${{ env.BOT_NAME }}"
+          git config user.email "${{ env.BOT_NAME }}@users.noreply.github.com"
+
+          git tag -a "${TAG}" "${SHA}" -m "${MESSAGE}"
+          git push origin "${TAG}"
