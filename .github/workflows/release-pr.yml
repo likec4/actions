@@ -74,7 +74,7 @@ jobs:
           ls -l mmd/
 
   deploy-release:
-    if: env.IS_RELEASE == 'true'
+    if: ${{env.IS_RELEASE == 'true'}}
     needs: [test]
     name: Build Docker
     runs-on: ubuntu-latest
