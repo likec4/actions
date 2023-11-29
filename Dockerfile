@@ -18,7 +18,7 @@ RUN yarn build
 
 # Run Stage
 
-FROM mcr.microsoft.com/playwright:v1.40.0-jammy AS runner
+FROM mcr.microsoft.com/playwright:v1.40.1-jammy AS runner
 
 ARG LIKEC4_VER=0.49.0
 
