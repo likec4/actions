@@ -1,6 +1,6 @@
 # Build Stage
 
-FROM node:20.9-alpine as builder
+FROM node:20-alpine as builder
 
 WORKDIR /likec4-action
 
@@ -18,13 +18,16 @@ RUN yarn build
 
 # Run Stage
 
-FROM mcr.microsoft.com/playwright:v1.40.1-jammy AS runner
+FROM mcr.microsoft.com/playwright:v1.41.2-jammy AS runner
 
 ARG LIKEC4_VER=0.53.0
 
 ENV NODE_ENV=production
 
-RUN npm install -g likec4@${LIKEC4_VER}
+RUN npm install -g likec4@${LIKEC4_VER} \
+    && apt-get update \
+    && apt-get install -y graphviz \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /likec4-action/dist /likec4-action
 

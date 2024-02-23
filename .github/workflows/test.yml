@@ -18,7 +18,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -44,6 +44,15 @@ jobs:
 
       - run: |
           ls -l images/
+
+      - name: build with binary
+        uses: ./ # Uses an action in the root directory
+        with:
+          output: dist-binary
+          use-dot-binary: true
+
+      - run: |
+          ls -l dist-binary/
 
       - name: codegen react
         uses: ./ # Uses an action in the root directory

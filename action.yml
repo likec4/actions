@@ -24,6 +24,9 @@ inputs:
   likec4-version:
     description: 'likec4 version to use (default: bundled with action)'
     required: false
+  use-dot-binary:
+    description: 'If true, layouter will use the binary version of graphviz'
+    required: false
 
 runs:
   using: docker

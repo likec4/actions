@@ -1,4 +1,4 @@
-import { debug, getInput, info, group, setFailed } from '@actions/core'
+import { debug, getInput, getBooleanInput, info, group, setFailed } from '@actions/core'
 import { exec } from '@actions/exec'
 import { cp } from '@actions/io'
 import { resolve } from 'node:path'
@@ -8,6 +8,7 @@ type Inputs = {
   path: string
   output: string
   base: string
+  useDotBinary: boolean
 }
 
 function asArg(name: string, value: string): string[] {
@@ -22,10 +23,12 @@ async function execBuild({
   likec4,
   path,
   output,
-  base
+  base,
+  useDotBinary
 }: Inputs): Promise<void> {
   const out = output || 'dist'
   const args = [
+    ...(useDotBinary ? ['--use-dot-binary'] : []),
     ...asArg('--base', base),
     ...asArg('--output', out),
     path
@@ -39,17 +42,20 @@ async function execBuild({
   })
 }
 
-async function execExport({
+async function execExport(format: 'png' | 'json', {
   likec4,
   path,
+  useDotBinary,
   output
 }: Inputs): Promise<void> {
+
   const args = [
+    ...(useDotBinary ? ['--use-dot-binary'] : []),
     ...asArg('--output', output),
     path
   ]
   await group(`export: png`, async () => {
-    await exec('npx', [...likec4, 'export', 'png', ...args])
+    await exec('npx', [...likec4, 'export', format, ...args])
   })
 }
 
@@ -59,10 +65,12 @@ const CodegenCommands = [
 async function execCodegen(command: string, {
   likec4,
   path,
+  useDotBinary,
   output
 }: Inputs): Promise<void> {
   const args = [
     command,
+    ...(useDotBinary ? ['--use-dot-binary'] : []),    
     ...asArg('-o', output),
     path
   ]
@@ -78,14 +86,15 @@ async function execCodegen(command: string, {
 export async function run(): Promise<void> {
   try {
     const action = getInput('action')
-    const exportTo = getInput('export')
+    let exportTo = getInput('export')
     const codegen = getInput('codegen')
 
     const inputs: Inputs = {
       likec4: ['--no-install', 'likec4'],
       path: getInput('path'),
       output: getInput('output'),
-      base: getInput('base')
+      base: getInput('base'),
+      useDotBinary: getBooleanInput('use-dot-binary')
     }
 
     const version = getInput('likec4-version')
@@ -98,6 +107,7 @@ export async function run(): Promise<void> {
     codegen != '' && debug(`codegen: ${codegen}`)
     debug(`cwd: ${process.cwd()}`)
     debug(`path: ${inputs.path}`)
+    debug(`use dot binary: ${inputs.useDotBinary}`)
 
     if (action === 'codegen' || (action === '' && codegen !== '')) {
       const command = codegen || 'react'
@@ -110,11 +120,12 @@ export async function run(): Promise<void> {
     }
 
     if (action === 'export' || (action === '' && exportTo !== '')) {
-      if (exportTo !== 'png') {
-        setFailed(`invalid export: ${exportTo}\nAllowed values: png`)
+      exportTo = exportTo === '' ? 'png' : exportTo  
+      if (exportTo !== 'png' && exportTo !== 'json') {
+        setFailed(`invalid export: ${exportTo}\nAllowed values: png, json`)
         return
       }
-      await execExport(inputs)
+      await execExport(exportTo, inputs)
       return
     }
 
