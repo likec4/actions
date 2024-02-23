@@ -26,6 +26,7 @@ inputs:
     required: false
   use-dot-binary:
     description: 'If true, layouter will use the binary version of graphviz'
+    default: 'false'
     required: false
 
 runs:
