@@ -49,7 +49,7 @@ jobs:
         uses: ./ # Uses an action in the root directory
         with:
           output: dist-binary
-          use-dot-binary: true
+          use-dot-binary: 'true'
 
       - run: |
           ls -l dist-binary/

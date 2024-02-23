@@ -39,7 +39,7 @@ Export diagrams to PNG:
           export: png
           path: src/likec4
           output: images
-          use-dot-binary: true
+          use-dot-binary: 'true'
 ```
 
 Code generation:
@@ -64,7 +64,7 @@ Code generation:
 | `path`           | Path in repository to likec4 sources, root otherwise                                                  |
 | `output`         | Output directory/file                                                                                 |
 | `base`           | Custom baseUrl for website                                                                            |
-| `use-dot-binary` | if true will use the binary version of graphviz                                                       |
+| `use-dot-binary` | if `'true'` will use the binary version of graphviz                                                       |
 
 > All inputs are optional.  
 > By default builds a website to `dist` directory.
