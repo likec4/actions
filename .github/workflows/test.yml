@@ -33,40 +33,30 @@ jobs:
         with:
           action: build
 
-      - run: |
-          ls -l dist/
-
       - name: export
         uses: ./ # Uses an action in the root directory
         with:
           export: png
           output: images
 
-      - run: |
-          ls -l images/
-
       - name: build with binary
         uses: ./ # Uses an action in the root directory
         with:
           output: dist-binary
-          use-dot-binary: 'true'
-
-      - run: |
-          ls -l dist-binary/
+          use-dot-bin: 'true'
 
       - name: codegen react
         uses: ./ # Uses an action in the root directory
         with:
           action: codegen
 
-      - run: |
-          ls -l
-
       - name: codegen mmd
         uses: ./ # Uses an action in the root directory
         with:
           codegen: mmd
           output: mmd
-
-      - run: |
-          ls -l mmd/
+          
+      - name: upload images
+        uses: actions/upload-artifact@v4
+        with:
+          path: images/

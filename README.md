@@ -39,7 +39,7 @@ Export diagrams to PNG:
           export: png
           path: src/likec4
           output: images
-          use-dot-binary: 'true'
+          use-dot-bin: 'true'
 ```
 
 Code generation:
@@ -56,15 +56,15 @@ Code generation:
 
 ## Inputs
 
-| Name             | Description                                                                                           |
-| ---------------- | ----------------------------------------------------------------------------------------------------- |
-| `action`         | Action to perform (`build` / `export` / `codegen`)                                                    |
-| `export`         | Can be used instead of `action: export`                                                               |
-| `codegen`        | Can be used instead of `action: codegen`, same values as in [cli](https://likec4.dev/docs/tools/cli/) |
-| `path`           | Path in repository to likec4 sources, root otherwise                                                  |
-| `output`         | Output directory/file                                                                                 |
-| `base`           | Custom baseUrl for website                                                                            |
-| `use-dot-binary` | if `'true'` will use the binary version of graphviz                                                       |
+| Name          | Description                                                                                           |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| `action`      | Action to perform (`build` / `export` / `codegen`)                                                    |
+| `export`      | Can be used instead of `action: export`                                                               |
+| `codegen`     | Can be used instead of `action: codegen`, same values as in [cli](https://likec4.dev/docs/tools/cli/) |
+| `path`        | Path in repository to likec4 sources, root otherwise                                                  |
+| `output`      | Output directory/file                                                                                 |
+| `base`        | Custom baseUrl for website                                                                            |
+| `use-dot-bin` | if `'true'` will use `dot` binary of graphviz                                                         |
 
 > All inputs are optional.  
 > By default builds a website to `dist` directory.

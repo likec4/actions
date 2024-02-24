@@ -8,7 +8,7 @@ type Inputs = {
   path: string
   output: string
   base: string
-  useDotBinary: boolean
+  useDotBin: boolean
 }
 
 function asArg(name: string, value: string): string[] {
@@ -24,11 +24,11 @@ async function execBuild({
   path,
   output,
   base,
-  useDotBinary
+  useDotBin
 }: Inputs): Promise<void> {
   const out = output || 'dist'
   const args = [
-    ...(useDotBinary ? ['--use-dot-binary'] : []),
+    ...(useDotBin ? ['--use-dot-bin'] : []),
     ...asArg('--base', base),
     ...asArg('--output', out),
     path
@@ -45,12 +45,12 @@ async function execBuild({
 async function execExport(format: 'png' | 'json', {
   likec4,
   path,
-  useDotBinary,
+  useDotBin,
   output
 }: Inputs): Promise<void> {
 
   const args = [
-    ...(useDotBinary ? ['--use-dot-binary'] : []),
+    ...(useDotBin ? ['--use-dot-bin'] : []),
     ...asArg('--output', output),
     path
   ]
@@ -65,12 +65,12 @@ const CodegenCommands = [
 async function execCodegen(command: string, {
   likec4,
   path,
-  useDotBinary,
+  useDotBin,
   output
 }: Inputs): Promise<void> {
   const args = [
     command,
-    ...(useDotBinary ? ['--use-dot-binary'] : []),    
+    ...(useDotBin ? ['--use-dot-bin'] : []),    
     ...asArg('-o', output),
     path
   ]
@@ -94,7 +94,7 @@ export async function run(): Promise<void> {
       path: getInput('path'),
       output: getInput('output'),
       base: getInput('base'),
-      useDotBinary: getBooleanInput('use-dot-binary')
+      useDotBin: getBooleanInput('use-dot-bin')
     }
 
     const version = getInput('likec4-version')
@@ -107,7 +107,7 @@ export async function run(): Promise<void> {
     codegen != '' && debug(`codegen: ${codegen}`)
     debug(`cwd: ${process.cwd()}`)
     debug(`path: ${inputs.path}`)
-    debug(`use dot binary: ${inputs.useDotBinary}`)
+    debug(`use dot binary: ${inputs.useDotBin}`)
 
     if (action === 'codegen' || (action === '' && codegen !== '')) {
       const command = codegen || 'react'
