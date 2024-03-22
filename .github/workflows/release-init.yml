@@ -6,11 +6,15 @@ on:
       version:
         description: 'version to release. Ex: v1.0.0'
         required: true
-        default: 'v1.0.0'
+        default: 'v1.0.0'        
       likec4:
         description: 'likec4 version to bundle. Ex: 1.0.0'
         required: false
         default: 'latest'
+      playwright:
+        description: 'playwright version. Ex: v1.42.1'
+        required: false
+        default: ''        
 
 jobs:
   release-init:
@@ -45,6 +49,14 @@ jobs:
         with:
           find: "ARG LIKEC4_VER.*"
           replace: "ARG LIKEC4_VER=${{ github.event.inputs.likec4 || 'latest' }}"          
+          include: "Dockerfile"
+          
+      - name: update Playwright
+        if: github.event.inputs.playwright !== ''
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "playwright\\:.*-jammy"
+          replace: "playwright:${{ github.event.inputs.playwright }}-jammy"          
           include: "Dockerfile"        
 
       - name: review Dockerfile
