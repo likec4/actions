@@ -52,7 +52,7 @@ jobs:
           include: "Dockerfile"
           
       - name: update Playwright
-        if: github.event.inputs.playwright !== ''
+        if: ${{ github.event.inputs.playwright != '' }}
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: "playwright\\:.*-jammy"
