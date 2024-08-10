@@ -20,7 +20,7 @@ RUN yarn build
 
 FROM mcr.microsoft.com/playwright:v1.45.2-jammy AS runner
 
-ARG LIKEC4_VER=1.7.1
+ARG LIKEC4_VER=1.7.2
 
 ENV NODE_ENV=production
 
