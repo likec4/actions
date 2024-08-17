@@ -8,6 +8,7 @@ type Inputs = {
   path: string
   output: string
   base: string
+  webcomponentPrefix: string
   useDotBin: boolean
 }
 
@@ -24,6 +25,7 @@ async function execBuild({
   path,
   output,
   base,
+  webcomponentPrefix,
   useDotBin
 }: Inputs): Promise<void> {
   const out = output || 'dist'
@@ -31,6 +33,7 @@ async function execBuild({
     ...(useDotBin ? ['--use-dot-bin'] : []),
     ...asArg('--base', base),
     ...asArg('--output', out),
+    ...asArg('--webcomponent-prefix', webcomponentPrefix),
     path
   ]
   await group(`build website`, async () => {
@@ -60,18 +63,20 @@ async function execExport(format: 'png' | 'json', {
 }
 
 const CodegenCommands = [
-  'react', 'views', 'ts', 'views-data', 'dot', 'd2', 'mermaid', 'mmd'
+  'react', 'webcomponent', 'views', 'ts', 'views-data', 'dot', 'd2', 'mermaid', 'mmd'
 ]
 async function execCodegen(command: string, {
   likec4,
   path,
   useDotBin,
+  webcomponentPrefix,
   output
 }: Inputs): Promise<void> {
   const args = [
     command,
     ...(useDotBin ? ['--use-dot-bin'] : []),    
     ...asArg('-o', output),
+    ...asArg('--webcomponent-prefix', webcomponentPrefix),
     path
   ]
   await group(`codegen: ${command}`, async () => {
@@ -94,6 +99,7 @@ export async function run(): Promise<void> {
       path: getInput('path'),
       output: getInput('output'),
       base: getInput('base'),
+      webcomponentPrefix: getInput('webcomponent-prefix'),
       useDotBin: getBooleanInput('use-dot-bin')
     }
 

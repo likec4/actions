@@ -28,6 +28,9 @@ inputs:
     description: 'if true will use dot binary of graphviz'
     default: 'false'
     required: false
+  webcomponent-prefix:
+    description: 'Prefix for generated webcomponents'
+    required: false
 
 runs:
   using: docker
