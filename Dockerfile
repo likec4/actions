@@ -18,9 +18,9 @@ RUN yarn build
 
 # Run Stage
 
-FROM mcr.microsoft.com/playwright:v1.46.0-jammy AS runner
+FROM mcr.microsoft.com/playwright:v1.46.1-jammy AS runner
 
-ARG LIKEC4_VER=1.7.4
+ARG LIKEC4_VER=1.8.0
 
 ENV NODE_ENV=production
 
