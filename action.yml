@@ -34,7 +34,7 @@ inputs:
 
 runs:
   using: docker
-  image: docker://ghcr.io/likec4/actions:v1.71.0
+  image: docker://ghcr.io/likec4/actions:v1.72.0
 
 branding:
   icon: image
