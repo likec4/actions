@@ -65,6 +65,7 @@ Code generation:
 | `output`      | Output directory/file                                                                                 |
 | `base`        | Custom baseUrl for website                                                                            |
 | `use-dot-bin` | if `'true'` will use `dot` binary of graphviz                                                         |
+| `use-hash-history` | use hash history for navigation, e.g. "/#/view" instead of "/view" |
 | `webcomponent-prefix` | same as in [cli](https://likec4.dev/tooling/codegen/#webcomponent)      |
 
 > All inputs are optional.  

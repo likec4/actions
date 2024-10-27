@@ -10,6 +10,7 @@ type Inputs = {
   base: string
   webcomponentPrefix: string
   useDotBin: boolean
+  useHashHistory: boolean
 }
 
 function asArg(name: string, value: string): string[] {
@@ -26,11 +27,13 @@ async function execBuild({
   output,
   base,
   webcomponentPrefix,
-  useDotBin
+  useDotBin,
+  useHashHistory
 }: Inputs): Promise<void> {
   const out = output || 'dist'
   const args = [
     ...(useDotBin ? ['--use-dot-bin'] : []),
+    ...(useHashHistory ? ['--use-hash-history'] : []),
     ...asArg('--base', base),
     ...asArg('--output', out),
     ...asArg('--webcomponent-prefix', webcomponentPrefix),
@@ -100,7 +103,8 @@ export async function run(): Promise<void> {
       output: getInput('output'),
       base: getInput('base'),
       webcomponentPrefix: getInput('webcomponent-prefix'),
-      useDotBin: getBooleanInput('use-dot-bin')
+      useDotBin: getBooleanInput('use-dot-bin'),
+      useHashHistory: getBooleanInput('use-hash-history')
     }
 
     const version = getInput('likec4-version')
@@ -114,6 +118,7 @@ export async function run(): Promise<void> {
     debug(`cwd: ${process.cwd()}`)
     debug(`path: ${inputs.path}`)
     debug(`use dot binary: ${inputs.useDotBin}`)
+    debug(`use hash history: ${inputs.useHashHistory}`)
 
     if (action === 'codegen' || (action === '' && codegen !== '')) {
       const command = codegen || 'react'

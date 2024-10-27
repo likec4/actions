@@ -28,6 +28,10 @@ inputs:
     description: 'if true will use dot binary of graphviz'
     default: 'false'
     required: false
+  use-hash-history:
+    description: 'use hash history for navigation, e.g. "/#/view" instead of "/view"'
+    default: 'false'
+    required: false
   webcomponent-prefix:
     description: 'Prefix for generated webcomponents'
     required: false
