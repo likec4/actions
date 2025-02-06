@@ -18,7 +18,7 @@ RUN yarn build
 
 # Run Stage
 
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy AS runner
+FROM mcr.microsoft.com/playwright:v1.49.1-jammy AS runner
 
 RUN apt-get update \
     && apt-get install -y graphviz \
@@ -26,7 +26,7 @@ RUN apt-get update \
 
 ENV NODE_ENV=production
 
-ARG LIKEC4_VER=1.18.0
+ARG LIKEC4_VER=1.20.3
 
 RUN npm install -g likec4@${LIKEC4_VER}
 
