@@ -26,7 +26,7 @@ RUN apt-get update \
 
 ENV NODE_ENV=production
 
-ARG LIKEC4_VER=1.42.1
+ARG LIKEC4_VER=1.43.0
 
 RUN npm install -g likec4@${LIKEC4_VER}
 
