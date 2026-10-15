@@ -18,7 +18,7 @@ RUN yarn build
 
 # Run Stage
 
-FROM mcr.microsoft.com/playwright:v1.56.1-jammy AS runner
+FROM mcr.microsoft.com/playwright:v1.64.1-jammy AS runner
 
 RUN apt-get update \
     && apt-get install -y graphviz \
