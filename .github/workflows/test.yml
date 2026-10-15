@@ -57,6 +57,6 @@ jobs:
           output: mmd
           
       - name: upload images
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: images/
